@@ -28,10 +28,23 @@ import type { GameState, GameSettings, ScoreResult } from "../engine/gameTypes";
 import { RoomEvents, GameEvents, GameActionTypes } from "../../../../../shared/socketEvents";
 
 // 💡 Server URL for Socket.IO connection.
-// In development: connect directly to localhost:3001
-// In production: you'd set VITE_SERVER_URL to your deployed server URL
-// (e.g., "https://loaf-server.railway.app")
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+// Security posture:
+// - In production: VITE_SERVER_URL MUST be explicitly set.
+// - In development: fallback to localhost is allowed for convenience.
+const configuredServerUrl = import.meta.env.VITE_SERVER_URL?.trim();
+const isDev = import.meta.env.DEV;
+
+if (!configuredServerUrl && !isDev) {
+  throw new Error("Missing required env var: VITE_SERVER_URL");
+}
+
+const SERVER_URL = configuredServerUrl || "http://localhost:3001";
+
+if (!configuredServerUrl && isDev) {
+  console.warn(
+    "VITE_SERVER_URL is not set. Falling back to http://localhost:3001 for local development."
+  );
+}
 
 // 💡 Connection states — the app shows different UI based on these.
 // Using a union type makes it impossible to set an invalid state.

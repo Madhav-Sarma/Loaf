@@ -159,8 +159,18 @@ const httpServer = createServer(app);
 // 💡 CORS origins: In production, set CLIENT_URL env var to your
 // Vercel deployment URL (e.g., "https://loaf-guess-me.vercel.app").
 // Multiple origins can be comma-separated.
-const corsOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(",").map((url) => url.trim())
+const configuredClientUrl = process.env.CLIENT_URL?.trim();
+const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction && !configuredClientUrl) {
+  throw new Error("Missing required env var in production: CLIENT_URL");
+}
+
+const corsOrigins = configuredClientUrl
+  ? configuredClientUrl
+      .split(",")
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0)
   : [
       "http://localhost:5173",      // Vite default dev port
       "http://localhost:5174",      // Vite alternate port
