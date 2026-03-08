@@ -8,10 +8,12 @@
 // ============================================================
 
 import { useState } from "react";
+import { Dice6, Lock, Search, Sparkles } from "lucide-react";
+
 import type { GameState } from "../engine/gameTypes";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell, WaitingPanel } from "./GameUi";
 
 interface NumberSelectionProps {
   state: GameState;
@@ -45,76 +47,76 @@ export function NumberSelection({
   // Guesser doesn't pick a number — just waits
   if (isGuesser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-indigo-50 to-purple-100">
-        <div className="text-6xl mb-4">🔍</div>
-        <h2 className="text-2xl font-bold text-indigo-800 mb-2">
-          Players are picking numbers...
-        </h2>
-        <p className="text-indigo-600 animate-pulse">
-          You'll write the action prompt next!
-        </p>
-      </div>
+      <PhaseShell>
+        <WaitingPanel
+          message="Players are choosing numbers"
+          detail="You will write the action prompt after everyone locks in."
+        />
+      </PhaseShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-indigo-50 to-purple-100">
-      <h2 className="text-2xl font-bold text-indigo-800 mb-1">
-        {isActor ? "🤫 Pick Your Secret Number" : "🎲 Pick a Number"}
-      </h2>
-      <p className="text-indigo-600 mb-2 text-center max-w-xs">
-        {isActor
-          ? "This is your secret — don't let anyone see!"
-          : "Everyone picks at the same time!"}
-      </p>
+    <PhaseShell>
+      <PhaseHeader
+        title={isActor ? "Pick Your Secret Number" : "Pick A Number"}
+        subtitle={
+          isActor
+            ? "This number guides your performance. Keep it private."
+            : "Choose now so you can track the round with everyone else."
+        }
+        icon={isActor ? <Lock className="size-6 text-fuchsia-500" /> : <Dice6 className="size-6 text-cyan-500" />}
+      />
+
       {isActor && (
-        <Badge variant="outline" className="mb-4 text-purple-700 border-purple-300 bg-purple-50">
-          🎭 You are an Actor
+        <Badge variant="outline" className="mb-2 border-fuchsia-200 bg-fuchsia-100 text-fuchsia-700">
+          <Sparkles className="size-3.5" />
+          You are an Actor
         </Badge>
       )}
 
       {hasSubmitted ? (
-        <Card className="text-center p-6">
-          <CardContent className="flex flex-col items-center gap-4">
-            <div className="text-6xl">✅</div>
-            <p className="font-medium text-indigo-700">
+        <GameCard className="w-full max-w-md text-center" contentClassName="py-6">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-100">
+            <Search className="size-7 text-emerald-600" />
+          </div>
+          <p className="text-base font-semibold text-slate-800">
               Number locked in! Waiting for others...
-            </p>
-          </CardContent>
-        </Card>
+          </p>
+        </GameCard>
       ) : (
         <>
           {/* Number grid — shadcn Button for each number */}
-          <div className="grid grid-cols-5 gap-3 mb-6 w-full max-w-xs">
+          <div className="grid w-full max-w-sm grid-cols-5 gap-2 sm:gap-3">
             {numbers.map((num) => (
-              <Button
+              <button
                 key={num}
-                variant={selectedNumber === num ? "default" : "outline"}
+                type="button"
                 onClick={() => setSelectedNumber(num)}
                 className={`aspect-square text-xl font-bold transition-all ${
                   selectedNumber === num
-                    ? "bg-indigo-600 text-white scale-110 shadow-lg"
-                    : "hover:bg-indigo-50"
+                    ? "scale-105 rounded-2xl bg-linear-to-r from-cyan-500 to-indigo-500 text-white shadow-lg"
+                    : "rounded-2xl border border-white/70 bg-white/80 text-slate-700 hover:scale-[1.02] hover:bg-white"
                 }`}
               >
                 {num}
-              </Button>
+              </button>
             ))}
           </div>
 
           {/* Confirm button */}
-          <Button
+          <AnimatedButton
             onClick={handleSubmit}
             disabled={selectedNumber === null}
-            size="lg"
-            className="w-full max-w-xs py-6 rounded-2xl text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="mt-2 h-14 w-full max-w-sm bg-linear-to-r from-cyan-500 to-indigo-500 text-lg"
+            icon={<Lock className="size-5" />}
           >
             {selectedNumber !== null
-              ? `Lock in ${selectedNumber} 🔒`
+              ? `Lock in ${selectedNumber}`
               : "Pick a number first"}
-          </Button>
+          </AnimatedButton>
         </>
       )}
-    </div>
+    </PhaseShell>
   );
 }

@@ -9,9 +9,11 @@
 
 import type { GameState } from "../engine/gameTypes";
 import { getCurrentPerformer } from "../engine/gameEngine";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Mic2, Timer } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell } from "./GameUi";
 
 interface PerformanceProps {
   state: GameState;
@@ -35,37 +37,36 @@ export function Performance({
   const totalPerformers = round.actorIds.length;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-rose-50 to-pink-100">
+    <PhaseShell>
+      <PhaseHeader
+        title="Performance Stage"
+        subtitle="One actor at a time. Watch closely for hidden number clues."
+        icon={<Mic2 className="size-6 text-rose-500" />}
+      />
+
       {/* Progress indicator */}
-      <Badge variant="outline" className="mb-4 text-rose-500 border-rose-300">
+      <Badge variant="outline" className="mb-2 border-rose-200 bg-rose-100 text-rose-700">
+        <Timer className="size-3.5" />
         Performer {performerIndex} of {totalPerformers}
       </Badge>
 
       {/* The stage — shadcn Card */}
-      <Card className="w-full max-w-sm mb-6 text-center">
-        <CardHeader>
-          <div className="text-5xl mb-2">🎭</div>
-          <CardTitle className="text-xl text-rose-800">
-            {performer.name}'s Turn
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-rose-50 rounded-xl p-4">
-            <p className="text-sm text-rose-400 mb-1">Action Prompt</p>
-            <p className="text-lg font-medium text-rose-700">
+      <GameCard className="w-full max-w-md text-center" title={`${performer.name}'s Turn`}>
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-rose-500">Action Prompt</p>
+            <p className="text-base font-semibold text-rose-700 sm:text-lg">
               "{round.actionPrompt}"
             </p>
           </div>
-        </CardContent>
-      </Card>
+      </GameCard>
 
       {/* Role-specific messages */}
       {isPerformer && (
         <div className="w-full max-w-sm text-center mb-6">
-          <p className="text-rose-700 font-medium text-lg">
+          <p className="text-lg font-bold text-rose-700">
             🌟 You're up! Perform the action!
           </p>
-          <p className="text-rose-500 text-sm mt-1">
+          <p className="mt-1 text-sm text-rose-500">
             Remember your secret number — let it guide your performance
           </p>
         </div>
@@ -79,16 +80,16 @@ export function Performance({
 
       {/* Guesser controls — only the guesser can advance */}
       {isGuesser && (
-        <Button
+        <AnimatedButton
           onClick={() => onCompletePerformance(performer.id)}
-          size="lg"
-          className="w-full max-w-sm py-6 rounded-2xl text-lg font-bold bg-rose-500 hover:bg-rose-600 text-white"
+          className="h-14 w-full max-w-sm bg-linear-to-r from-rose-500 via-pink-500 to-orange-400 text-lg"
+          icon={<Mic2 className="size-5" />}
         >
           {performerIndex < totalPerformers
             ? "Next Performer ➡️"
             : "All Done — Start Guessing! 🎯"}
-        </Button>
+        </AnimatedButton>
       )}
-    </div>
+    </PhaseShell>
   );
 }

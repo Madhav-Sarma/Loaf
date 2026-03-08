@@ -11,10 +11,13 @@
 // ============================================================
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, DoorOpen, Sparkles, UserPlus, Users } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell } from "./GameUi";
 
 interface JoinScreenProps {
   // 💡 These come from the useGameSocket hook via App.tsx
@@ -47,30 +50,29 @@ export function JoinScreen({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 flex flex-col items-center justify-center p-4">
-      {/* Title / Branding */}
-      <div className="text-center mb-8">
-        <h1 className="text-5xl font-bold text-amber-800 mb-2">🍞 Loaf</h1>
-        <p className="text-amber-600 text-lg">Party games with friends</p>
-      </div>
+    <div className="phase-bg min-h-screen">
+      <PhaseShell>
+        <PhaseHeader
+          title="Welcome To Loaf"
+          subtitle="Create a room or jump into one with your friends in seconds."
+          icon={<Sparkles className="size-6 text-orange-500 animate-pulse" />}
+        />
 
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-center">
-            {mode === "create" ? "Create a Room" : mode === "join" ? "Join a Room" : "Let's Play!"}
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
+        <GameCard
+          className="w-full max-w-md"
+          title={mode === "create" ? "Create Room" : mode === "join" ? "Join Room" : "Let's Play"}
+          subtitle="Large buttons and fast flow for mobile party sessions."
+        >
           {/* Player Name (always shown) */}
           <div className="space-y-2">
-            <Label htmlFor="playerName">Your Name</Label>
+            <Label htmlFor="playerName">Your name</Label>
             <Input
               id="playerName"
               placeholder="Enter your name..."
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               maxLength={20}
+              className="h-12 rounded-xl border-white/60 bg-white/80 text-base"
               // 💡 onKeyDown handles Enter key for quick submission
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -84,41 +86,42 @@ export function JoinScreen({
           {/* Show mode selection initially */}
           {mode === null && (
             <div className="space-y-3 pt-2">
-              <Button
-                className="w-full h-12 text-base"
+              <AnimatedButton
                 onClick={() => setMode("create")}
                 disabled={playerName.trim().length === 0}
+                icon={<UserPlus className="size-4 transition-transform group-hover/button:rotate-6" />}
               >
                 Create Room
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full h-12 text-base"
+              </AnimatedButton>
+              <AnimatedButton
+                className="bg-linear-to-r from-cyan-500 via-sky-400 to-indigo-500"
                 onClick={() => setMode("join")}
                 disabled={playerName.trim().length === 0}
+                icon={<DoorOpen className="size-4 transition-transform group-hover/button:-translate-y-0.5" />}
               >
                 Join Room
-              </Button>
+              </AnimatedButton>
             </div>
           )}
 
           {/* Create Room Mode */}
           {mode === "create" && (
             <div className="space-y-3 pt-2">
-              <Button
-                className="w-full h-12 text-base"
+              <AnimatedButton
                 onClick={handleCreate}
                 disabled={isConnecting || playerName.trim().length === 0}
+                icon={<Users className="size-4" />}
               >
                 {isConnecting ? "Creating..." : "Create Room"}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
+              </AnimatedButton>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
                 onClick={() => setMode(null)}
               >
+                <ArrowLeft className="size-4" />
                 Back
-              </Button>
+              </button>
             </div>
           )}
 
@@ -134,45 +137,47 @@ export function JoinScreen({
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   maxLength={6}
                   // 💡 Make the input uppercase as you type for consistency
-                  className="text-center text-2xl tracking-widest font-bold uppercase"
+                  className="h-14 rounded-xl border-white/60 bg-white/80 text-center text-2xl tracking-[0.35em] font-black uppercase"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleJoin();
                   }}
                 />
               </div>
-              <Button
-                className="w-full h-12 text-base"
+              <AnimatedButton
+                className="bg-linear-to-r from-cyan-500 via-sky-400 to-indigo-500"
                 onClick={handleJoin}
                 disabled={
                   isConnecting ||
                   playerName.trim().length === 0 ||
                   roomCode.trim().length === 0
                 }
+                icon={<DoorOpen className="size-4" />}
               >
                 {isConnecting ? "Joining..." : "Join Room"}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
+              </AnimatedButton>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
                 onClick={() => setMode(null)}
               >
+                <ArrowLeft className="size-4" />
                 Back
-              </Button>
+              </button>
             </div>
           )}
 
           {/* Error Display */}
           {error && (
-            <p className="text-sm text-red-600 text-center bg-red-50 p-2 rounded-md">
+            <p className="rounded-lg bg-red-100 px-3 py-2 text-center text-sm text-red-700">
               {error}
             </p>
           )}
-        </CardContent>
-      </Card>
+        </GameCard>
 
-      <p className="text-xs text-amber-600/60 mt-6">
-        Get 3+ friends together and play on your phones!
-      </p>
+        <Badge className="border-orange-200 bg-orange-100 text-orange-700">
+          Best with 3+ players
+        </Badge>
+      </PhaseShell>
     </div>
   );
 }

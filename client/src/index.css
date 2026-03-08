@@ -6,30 +6,30 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+  --background: oklch(0.985 0.015 73);
+  --foreground: oklch(0.23 0.07 273);
+  --card: oklch(0.998 0.008 84);
+  --card-foreground: oklch(0.21 0.06 272);
+  --popover: oklch(0.998 0.008 84);
+  --popover-foreground: oklch(0.2 0.06 274);
+  --primary: oklch(0.64 0.22 26);
+  --primary-foreground: oklch(0.99 0.01 90);
+  --secondary: oklch(0.96 0.036 198);
+  --secondary-foreground: oklch(0.31 0.08 253);
+  --muted: oklch(0.95 0.018 78);
+  --muted-foreground: oklch(0.55 0.04 262);
+  --accent: oklch(0.95 0.041 306);
+  --accent-foreground: oklch(0.34 0.09 312);
     --destructive: oklch(0.58 0.22 27);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --border: oklch(0.9 0.03 264 / 44%);
+    --input: oklch(0.92 0.02 80);
+    --ring: oklch(0.76 0.19 38);
     --chart-1: oklch(0.809 0.105 251.813);
     --chart-2: oklch(0.623 0.214 259.815);
     --chart-3: oklch(0.546 0.245 262.881);
     --chart-4: oklch(0.488 0.243 264.376);
     --chart-5: oklch(0.424 0.199 265.638);
-    --radius: 0.625rem;
+    --radius: 1rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
@@ -75,7 +75,7 @@
 }
 
 @theme inline {
-    --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: 'Geist Variable', 'Trebuchet MS', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -121,9 +121,86 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 12% 18%, color-mix(in oklab, #ff7b6b 25%, transparent) 0, transparent 40%),
+      radial-gradient(circle at 82% 16%, color-mix(in oklab, #34d6ff 26%, transparent) 0, transparent 42%),
+      radial-gradient(circle at 52% 92%, color-mix(in oklab, #ffe16b 30%, transparent) 0, transparent 46%),
+      linear-gradient(165deg, #fffaf0 0%, #fff3df 50%, #fff9f2 100%);
+    min-height: 100dvh;
     }
   html {
     @apply font-sans;
     }
+}
+
+@layer utilities {
+  .glass-surface {
+    @apply border border-white/50 bg-white/70 backdrop-blur-lg;
+  }
+
+  .phase-bg {
+    @apply relative overflow-hidden;
+  }
+
+  .phase-bg::before,
+  .phase-bg::after {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(44px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .phase-bg::before {
+    width: 220px;
+    height: 220px;
+    background: color-mix(in oklab, #ff8c5a 35%, transparent);
+    top: -90px;
+    right: -70px;
+    animation: float-orb 11s ease-in-out infinite;
+  }
+
+  .phase-bg::after {
+    width: 240px;
+    height: 240px;
+    background: color-mix(in oklab, #24cdfc 30%, transparent);
+    bottom: -120px;
+    left: -70px;
+    animation: float-orb 13s ease-in-out infinite reverse;
+  }
+
+  .touch-card {
+    @apply min-h-12;
+  }
+}
+
+@keyframes float-orb {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-14px) scale(1.05);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-14px) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(230px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  animation: confetti-fall 1.8s ease-out forwards;
+  background: hsl(calc(var(--i, 1) * 37) 92% 62%);
 }

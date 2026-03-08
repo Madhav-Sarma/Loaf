@@ -7,9 +7,11 @@
 // ============================================================
 
 import type { GameState } from "../engine/gameTypes";
-import { Button } from "@/components/ui/button";
+import { Eye, Handshake, Search, Sparkles } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
-import { Widget, WidgetContent, WidgetFooter, WidgetHeader, WidgetTitle } from "@/components/ui/widget";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell } from "./GameUi";
 
 interface RoleRevealProps {
   gameState: GameState;
@@ -28,66 +30,52 @@ export function RoleReveal({
   // 💡 Each role gets a different emoji, color, and description.
   const roleConfig = {
     guesser: {
-      emoji: "🔍",
+      icon: <Search className="size-12 text-violet-500" />,
       title: "You are the Guesser!",
       description: "Write an action prompt for the actors, then try to guess their secret numbers!",
-      bgColor: "bg-purple-50 border-purple-200",
-      textColor: "text-purple-800",
-      badgeClass: "bg-purple-100 text-purple-700",
-      containerBg: "from-purple-50 to-violet-100",
+      textColor: "text-violet-800",
+      badgeClass: "bg-violet-100 text-violet-700",
     },
     actor: {
-      emoji: "🎭",
+      icon: <Handshake className="size-12 text-orange-500" />,
       title: "You are an Actor!",
       description: "Pick a secret number, then perform the action based on your number!",
-      bgColor: "bg-orange-50 border-orange-200",
       textColor: "text-orange-800",
       badgeClass: "bg-orange-100 text-orange-700",
-      containerBg: "from-orange-50 to-amber-100",
     },
     player: {
-      emoji: "👀",
+      icon: <Eye className="size-12 text-cyan-500" />,
       title: "You are a Viewer!",
       description: "Watch the performances and try to guess each actor's secret number!",
-      bgColor: "bg-blue-50 border-blue-200",
       textColor: "text-blue-800",
       badgeClass: "bg-blue-100 text-blue-700",
-      containerBg: "from-blue-50 to-cyan-100",
     },
   };
 
   const config = roleConfig[currentPlayer.role];
 
   return (
-    <div className={`flex flex-col items-center justify-center min-h-[60vh] gap-6 p-6 bg-gradient-to-b ${config.containerBg} rounded-2xl mx-4`}>
-      {/* Role card as a Wigggle Widget */}
-      <Widget size="lg" className={config.bgColor}>
-        <WidgetHeader className="justify-center pt-4">
-          <WidgetTitle className={config.textColor}>
-            <Badge variant="outline" className={config.badgeClass}>
-              Round {gameState.roundCount} of {gameState.settings.totalRounds}
-            </Badge>
-          </WidgetTitle>
-        </WidgetHeader>
-        <WidgetContent className="flex-col gap-4">
-          <span className="text-6xl">{config.emoji}</span>
-          <h1 className={`text-2xl font-bold ${config.textColor}`}>
-            {config.title}
-          </h1>
-          <p className="text-center text-gray-600 max-w-xs text-sm whitespace-normal">
-            {config.description}
-          </p>
-        </WidgetContent>
-        <WidgetFooter className="justify-center pb-4">
-          <Button
-            onClick={onContinue}
-            size="lg"
-            className="px-8 py-3 rounded-lg shadow-md font-semibold"
-          >
-            Got it!
-          </Button>
-        </WidgetFooter>
-      </Widget>
-    </div>
+    <PhaseShell>
+      <PhaseHeader
+        title="Role Reveal"
+        subtitle="Keep it secret. Play your role like a pro and fool your friends."
+        icon={<Sparkles className="size-6 text-fuchsia-500 animate-pulse" />}
+        roundLabel={`Round ${gameState.roundCount} / ${gameState.settings.totalRounds}`}
+      />
+
+      <GameCard className="w-full max-w-lg text-center" contentClassName="space-y-5 py-3">
+        <div className="mx-auto inline-flex rounded-2xl bg-white p-4 shadow-sm">{config.icon}</div>
+        <h1 className={`text-2xl font-black ${config.textColor}`}>{config.title}</h1>
+        <p className="mx-auto max-w-sm text-sm text-slate-600 sm:text-base">{config.description}</p>
+        <Badge className={config.badgeClass}>Ready for this round</Badge>
+        <AnimatedButton
+          onClick={onContinue}
+          className="mx-auto h-12 max-w-sm"
+          icon={<Sparkles className="size-4" />}
+        >
+          Got It
+        </AnimatedButton>
+      </GameCard>
+    </PhaseShell>
   );
 }

@@ -8,11 +8,13 @@
 // ============================================================
 
 import { useState } from "react";
+import { Edit3, Sparkles, WandSparkles } from "lucide-react";
+
 import type { GameState } from "../engine/gameTypes";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell, WaitingPanel } from "./GameUi";
 
 interface PromptWritingProps {
   state: GameState;
@@ -54,64 +56,57 @@ export function PromptWriting({
 
   if (isGuesser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-emerald-50 to-teal-100">
-        <h2 className="text-2xl font-bold text-emerald-800 mb-2">
-          ✍️ Write the Action
-        </h2>
-        <p className="text-emerald-600 mb-6 text-center max-w-xs">
-          Write a prompt that actors will perform. Their performance should
-          somehow reflect their secret number.
-        </p>
+      <PhaseShell>
+        <PhaseHeader
+          title="Write The Action"
+          subtitle="Create a short prompt that actors can perform based on their hidden number."
+          icon={<Edit3 className="size-6 text-emerald-500" />}
+        />
 
         {hasSubmitted ? (
-          <Card className="text-center p-6 max-w-sm">
-            <CardContent className="flex flex-col items-center gap-4">
-              <div className="text-6xl">📝</div>
-              <p className="text-emerald-700 font-medium">Prompt submitted!</p>
-              <Badge variant="outline" className="text-emerald-600 border-emerald-300">
+          <GameCard className="w-full max-w-md text-center" contentClassName="space-y-4 py-4">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-100">
+              <WandSparkles className="size-7 text-emerald-600" />
+            </div>
+            <p className="font-semibold text-slate-900">Prompt submitted!</p>
+            <Badge variant="outline" className="border-emerald-200 bg-emerald-100 text-emerald-700 text-wrap whitespace-normal">
                 "{state.currentRound?.actionPrompt || prompt}"
               </Badge>
-            </CardContent>
-          </Card>
+          </GameCard>
         ) : (
-          <Card className="w-full max-w-sm p-4">
-            <CardContent className="space-y-4">
+          <GameCard className="w-full max-w-md" contentClassName="space-y-3">
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder={EXAMPLE_PROMPTS[exampleIndex]}
                 maxLength={200}
                 rows={3}
-                className="text-lg border-emerald-200 focus:border-emerald-500 resize-none"
+                className="min-h-28 rounded-2xl border-white/60 bg-white/85 text-base sm:text-lg focus:border-emerald-500 resize-none"
               />
-              <p className="text-xs text-emerald-400 text-right">
+              <p className="text-right text-xs font-semibold text-slate-500">
                 {prompt.length}/200
               </p>
-              <Button
+              <AnimatedButton
                 onClick={handleSubmit}
                 disabled={prompt.trim().length === 0}
-                size="lg"
-                className="w-full py-6 rounded-2xl text-lg font-bold bg-emerald-500 hover:bg-emerald-600 text-white"
+                className="h-14 bg-linear-to-r from-emerald-500 via-teal-400 to-cyan-400 text-lg"
+                icon={<Sparkles className="size-5" />}
               >
-                Submit Prompt ✨
-              </Button>
-            </CardContent>
-          </Card>
+                Submit Prompt
+              </AnimatedButton>
+          </GameCard>
         )}
-      </div>
+      </PhaseShell>
     );
   }
 
   // Non-guesser waiting view
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-emerald-50 to-teal-100">
-      <div className="text-6xl mb-4 animate-bounce">✍️</div>
-      <h2 className="text-2xl font-bold text-emerald-800 mb-2">
-        Guesser is writing...
-      </h2>
-      <p className="text-emerald-600 animate-pulse">
-        They're coming up with an action for actors to perform
-      </p>
-    </div>
+    <PhaseShell>
+      <WaitingPanel
+        message="Guesser is writing"
+        detail="They are crafting the action prompt for this round."
+      />
+    </PhaseShell>
   );
 }

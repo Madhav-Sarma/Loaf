@@ -7,10 +7,18 @@
 
 import type { GameState } from "../engine/gameTypes";
 import { getLeaderboard } from "../engine/gameEngine";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { RefreshCcw, Trophy } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Widget, WidgetContent, WidgetFooter, WidgetHeader, WidgetTitle } from "@/components/ui/widget";
+
+import {
+  AnimatedButton,
+  AnimatedLeaderboard,
+  ConfettiBurst,
+  PhaseHeader,
+  PhaseShell,
+} from "./GameUi";
 
 interface GameOverProps {
   state: GameState;
@@ -25,72 +33,48 @@ export function GameOver({ state, playerId, onPlayAgain }: GameOverProps) {
   const isWinner = winner?.id === playerId;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-yellow-100 to-amber-200">
+    <PhaseShell className="pb-10">
+      <PhaseHeader
+        title="Game Over"
+        subtitle="Final standings are in. Celebrate, then run it back."
+        icon={<Trophy className="size-7 text-amber-500" />}
+      />
+
       {/* Winner announcement — Wigggle Widget */}
-      <Widget size="lg" className="border-amber-300 bg-gradient-to-b from-amber-50 to-yellow-100 mb-8">
+      <div className="relative">
+        <ConfettiBurst />
+        <Widget size="lg" className="mb-6 border-amber-300 bg-linear-to-b from-amber-50 to-yellow-100 shadow-xl shadow-amber-500/20">
         <WidgetHeader className="justify-center pt-2">
-          <WidgetTitle className="text-amber-500 text-xs">
+          <WidgetTitle className="text-amber-600 text-xs uppercase tracking-wide">
             {state.roundCount} rounds played
           </WidgetTitle>
         </WidgetHeader>
         <WidgetContent className="flex-col gap-3">
           <div className="text-7xl">🏆</div>
-          <h1 className="text-2xl font-bold text-amber-800">
+          <h1 className="text-2xl font-black text-amber-800 text-center px-4">
             {isWinner ? "You Won!" : `${winner?.name} Wins!`}
           </h1>
-          <Badge variant="outline" className="text-amber-600 border-amber-300 text-lg px-4 py-1">
+          <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-700 text-lg px-4 py-1">
             {winner?.score} points
           </Badge>
         </WidgetContent>
         <WidgetFooter />
       </Widget>
+      </div>
 
       {/* Final leaderboard — shadcn Card */}
-      <Card className="w-full max-w-sm mb-8">
-        <CardHeader>
-          <CardTitle className="text-center text-amber-700">Final Standings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {leaderboard.map((player, index) => (
-            <div
-              key={player.id}
-              className={`flex items-center justify-between rounded-xl px-4 py-3 ${
-                index === 0
-                  ? "bg-amber-400 text-white"
-                  : "bg-muted/50"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">
-                  {index === 0
-                    ? "🥇"
-                    : index === 1
-                    ? "🥈"
-                    : index === 2
-                    ? "🥉"
-                    : `#${index + 1}`}
-                </span>
-                <span className="font-medium">
-                  {player.name}
-                  {player.id === playerId && " (you)"}
-                </span>
-              </div>
-              <span className="text-xl font-bold">{player.score}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <AnimatedLeaderboard players={leaderboard} currentPlayerId={playerId} className="w-full max-w-md" />
 
       {/* Play again (host only) */}
       {isHost && (
-        <Button
+        <AnimatedButton
           onClick={onPlayAgain}
-          size="lg"
-          className="w-full max-w-sm py-6 rounded-2xl text-lg font-bold bg-amber-500 hover:bg-amber-600 text-white"
+          className="h-14 w-full max-w-md bg-linear-to-r from-amber-500 via-orange-500 to-fuchsia-500 text-lg"
+          icon={<RefreshCcw className="size-5 transition-transform duration-300 group-hover/button:rotate-180" />}
         >
-          Play Again 🔄
-        </Button>
+          Play Again
+        </AnimatedButton>
       )}
-    </div>
+    </PhaseShell>
   );
 }

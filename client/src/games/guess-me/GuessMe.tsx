@@ -19,6 +19,7 @@
 // ============================================================
 
 import { useState } from "react";
+import { Timer, Sparkles } from "lucide-react";
 import { GameOver } from "./components/GameOver";
 import { GuesserReview } from "./components/GuesserReview";
 import { Guessing } from "./components/Guessing";
@@ -70,6 +71,18 @@ export function GuessMe() {
   // "finish" (without waiting for the server roundtrip).
   const [hasFinishedGuessing, setHasFinishedGuessing] = useState(false);
 
+  const phaseLabel: Record<string, string> = {
+    lobby: "Lobby",
+    "role-assignment": "Role Reveal",
+    "number-selection": "Pick Numbers",
+    "prompt-writing": "Write Prompt",
+    performance: "Performance",
+    guessing: "Guessing",
+    "guesser-review": "Guesser Review",
+    reveal: "Reveal",
+    "game-over": "Game Over",
+  };
+
   // ----------------------------------------------------------
   // SCREEN 1: Not connected or not in a room → JoinScreen
   // ----------------------------------------------------------
@@ -101,19 +114,27 @@ export function GuessMe() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100">
-      <header className="max-w-md mx-auto px-4 pt-4">
-        <Card className="p-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-amber-800">🍞 Guess Me</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs">
-                Round {Math.max(gameState.roundCount, 1)}
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {gameState.phase}
-              </Badge>
-            </div>
+    <div className="phase-bg min-h-screen">
+      <header className="mx-auto max-w-xl px-4 pt-4 sm:pt-5">
+        <Card className="glass-surface gap-2 border-white/60 p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="inline-flex items-center gap-2 text-lg font-black text-slate-900 sm:text-xl">
+              <span className="text-2xl">🍞</span>
+              Guess Me
+            </h1>
+            <Badge className="bg-orange-100 text-orange-700">
+              <Sparkles className="size-3.5" />
+              Live
+            </Badge>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="border-cyan-200 bg-cyan-100 text-cyan-700 text-xs">
+              <Timer className="size-3.5" />
+              Round {Math.max(gameState.roundCount, 1)} / {gameState.settings.totalRounds}
+            </Badge>
+            <Badge variant="secondary" className="text-xs font-semibold capitalize">
+              {phaseLabel[gameState.phase] ?? gameState.phase}
+            </Badge>
           </div>
         </Card>
       </header>

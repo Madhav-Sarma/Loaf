@@ -8,10 +8,12 @@
 // ============================================================
 
 import { useState } from "react";
+import { Search, Sparkles, Target } from "lucide-react";
+
 import type { GameState } from "../engine/gameTypes";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell, WaitingPanel } from "./GameUi";
 
 interface GuessingProps {
   state: GameState;
@@ -61,101 +63,90 @@ export function Guessing({
   // Guesser waits during this phase
   if (isGuesser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-cyan-100">
-        <div className="text-6xl mb-4">🔍</div>
-        <h2 className="text-2xl font-bold text-blue-800 mb-2">
-          Players are guessing...
-        </h2>
-        <p className="text-blue-600 animate-pulse">
-          You'll make your guess next!
-        </p>
-      </div>
+      <PhaseShell>
+        <WaitingPanel
+          message="Players are guessing"
+          detail="You will make your final guesses in the review phase."
+        />
+      </PhaseShell>
     );
   }
 
   // Actors can't guess
   if (isActor) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-cyan-100">
-        <div className="text-6xl mb-4">😏</div>
-        <h2 className="text-2xl font-bold text-blue-800 mb-2">
-          Players are guessing your number
-        </h2>
-        <p className="text-blue-600">Sit back and watch!</p>
-      </div>
+      <PhaseShell>
+        <WaitingPanel
+          message="Players are guessing your number"
+          detail="Watch reactions and keep your poker face."
+        />
+      </PhaseShell>
     );
   }
 
   // Player already submitted — waiting for others
   if (hasFinished) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-cyan-100">
-        <div className="text-6xl mb-4">✅</div>
-        <h2 className="text-2xl font-bold text-blue-800 mb-2">
-          Guesses submitted!
-        </h2>
-        <p className="text-blue-600 animate-pulse">
-          Waiting for other players to finish guessing...
-        </p>
-      </div>
+      <PhaseShell>
+        <WaitingPanel
+          message="Guesses submitted"
+          detail="Waiting for everyone else to finish this phase."
+        />
+      </PhaseShell>
     );
   }
 
   // Regular player: Submit guesses
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-b from-blue-50 to-cyan-100">
-      <h2 className="text-2xl font-bold text-blue-800 mb-2">
-        🎯 Guess the Numbers!
-      </h2>
-      <p className="text-blue-600 mb-6">
-        What number did each actor have?
-      </p>
+    <PhaseShell>
+      <PhaseHeader
+        title="Guess The Numbers"
+        subtitle="Pick one number for each actor based on their performance."
+        icon={<Target className="size-6 text-cyan-500" />}
+      />
 
       {/* One Card per actor */}
-      <div className="w-full max-w-sm space-y-6 mb-6">
+      <div className="mb-6 w-full max-w-md space-y-4">
         {actors.map((actor) => (
-          <Card key={actor.id}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🎭 {actor.name}
+          <GameCard key={actor.id} className="w-full" title={
+            <span className="inline-flex items-center gap-2">
+              🎭 {actor.name}
                 {localGuesses.has(actor.id) && (
-                  <Badge className="bg-green-100 text-green-700 border-green-300" variant="outline">
+                  <Badge className="border-emerald-200 bg-emerald-100 text-emerald-700" variant="outline">
                     ✓ {localGuesses.get(actor.id)}
                   </Badge>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-5 gap-2">
+            </span>
+          }>
+              <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
                 {numbers.map((num) => (
-                  <Button
+                  <button
                     key={num}
-                    variant={localGuesses.get(actor.id) === num ? "default" : "outline"}
+                    type="button"
                     onClick={() => handleGuess(actor.id, num)}
                     className={`aspect-square text-sm font-bold transition-all ${
                       localGuesses.get(actor.id) === num
-                        ? "bg-blue-600 text-white scale-105 shadow"
-                        : "hover:bg-blue-50"
+                        ? "scale-105 rounded-xl bg-linear-to-r from-cyan-500 to-indigo-500 text-white shadow-md"
+                        : "rounded-xl border border-white/70 bg-white/85 text-slate-700 hover:scale-[1.02]"
                     }`}
                   >
                     {num}
-                  </Button>
+                  </button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+          </GameCard>
         ))}
       </div>
 
       {/* Submit all guesses */}
-      <Button
+      <AnimatedButton
         onClick={onFinishGuessing}
         disabled={!allGuessed}
-        size="lg"
-        className="w-full max-w-sm py-6 rounded-2xl text-lg font-bold bg-blue-500 hover:bg-blue-600 text-white"
+        className="h-14 w-full max-w-md bg-linear-to-r from-cyan-500 via-sky-400 to-indigo-500 text-lg"
+        icon={allGuessed ? <Sparkles className="size-5" /> : <Search className="size-5" />}
       >
-        {allGuessed ? "Submit Guesses 🎯" : "Guess for all actors first"}
-      </Button>
-    </div>
+        {allGuessed ? "Submit Guesses" : "Guess for all actors first"}
+      </AnimatedButton>
+    </PhaseShell>
   );
 }

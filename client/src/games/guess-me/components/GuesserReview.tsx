@@ -6,10 +6,12 @@
 // ============================================================
 
 import { useState } from "react";
+import { Search, Sparkles } from "lucide-react";
+
 import type { GameState } from "../engine/gameTypes";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+import { AnimatedButton, GameCard, PhaseHeader, PhaseShell, WaitingPanel } from "./GameUi";
 
 interface GuesserReviewProps {
   state: GameState;
@@ -35,11 +37,12 @@ export function GuesserReview({
 
   if (!isGuesser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-indigo-50 to-violet-100">
-        <div className="text-6xl mb-4">🔍</div>
-        <h2 className="text-2xl font-bold text-indigo-800 mb-2">Guesser Reviewing Guesses...</h2>
-        <p className="text-indigo-600">Waiting for the final guess.</p>
-      </div>
+      <PhaseShell>
+        <WaitingPanel
+          message="Guesser is reviewing"
+          detail="The final picks are being locked in right now."
+        />
+      </PhaseShell>
     );
   }
 
@@ -61,28 +64,29 @@ export function GuesserReview({
   const canFinalize = actors.every((a) => localGuesses.has(a.id));
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-b from-indigo-50 to-violet-100">
-      <h2 className="text-2xl font-bold text-indigo-800 mb-2">Final Guess Time</h2>
-      <p className="text-indigo-600 mb-6 text-center">See player guesses, then lock your final answer for each actor.</p>
+    <PhaseShell>
+      <PhaseHeader
+        title="Final Guess Time"
+        subtitle="Use the crowd guesses as hints, then lock your answer per actor."
+        icon={<Search className="size-6 text-indigo-500" />}
+      />
 
-      <div className="w-full max-w-sm space-y-5 mb-6">
+      <div className="mb-6 w-full max-w-md space-y-4">
         {actors.map((actor) => (
-          <Card key={actor.id}>
-            <CardHeader>
-              <CardTitle>🎭 {actor.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <GameCard key={actor.id} title={`🎭 ${actor.name}`} className="w-full">
               {/* Player guesses */}
-              <div className="text-sm text-muted-foreground">
+              <div className="space-y-2 text-sm text-slate-600">
                 {actor.playerGuesses.length === 0 ? (
                   <p>No player guesses submitted.</p>
                 ) : (
                   actor.playerGuesses.map((guess, index) => {
                     const guesserName = state.players.find((p) => p.id === guess.guesserId)?.name ?? "Unknown";
                     return (
-                      <div key={`${guess.guesserId}-${index}`} className="flex items-center gap-2">
-                        <span>{guesserName}:</span>
-                        <Badge variant="outline">{guess.guessedNumber}</Badge>
+                      <div key={`${guess.guesserId}-${index}`} className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-1.5">
+                        <span className="font-medium">{guesserName}</span>
+                        <Badge variant="outline" className="border-cyan-200 bg-cyan-100 text-cyan-700">
+                          {guess.guessedNumber}
+                        </Badge>
                       </div>
                     );
                   })
@@ -90,35 +94,34 @@ export function GuesserReview({
               </div>
 
               {/* Number grid for guesser's pick */}
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
                 {numbers.map((num) => (
-                  <Button
+                  <button
                     key={num}
-                    variant={localGuesses.get(actor.id) === num ? "default" : "outline"}
+                    type="button"
                     onClick={() => handlePick(actor.id, num)}
                     className={`aspect-square text-sm font-bold transition-all ${
                       localGuesses.get(actor.id) === num
-                        ? "bg-indigo-600 text-white"
-                        : "hover:bg-indigo-50"
+                        ? "rounded-xl bg-linear-to-r from-indigo-500 to-violet-500 text-white shadow-md"
+                        : "rounded-xl border border-white/70 bg-white/85 text-slate-700 hover:scale-[1.02]"
                     }`}
                   >
                     {num}
-                  </Button>
+                  </button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+          </GameCard>
         ))}
       </div>
 
-      <Button
+      <AnimatedButton
         disabled={!canFinalize}
         onClick={onFinalize}
-        size="lg"
-        className="w-full max-w-sm py-6 rounded-2xl text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
+        className="h-14 w-full max-w-md bg-linear-to-r from-indigo-500 via-violet-500 to-fuchsia-500 text-lg"
+        icon={<Sparkles className="size-5" />}
       >
         Finalize and Reveal
-      </Button>
-    </div>
+      </AnimatedButton>
+    </PhaseShell>
   );
 }
