@@ -1,0 +1,13 @@
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: loaf-server
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        sync: false  # Set manually to your Vercel URL
