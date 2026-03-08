@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Dice1, Users, Sparkles } from 'lucide-react'
 
 import { GameCard, PhaseHeader, PhaseShell } from '@/games/guess-me/components/GameUi'
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt'
 
 const games = [
   {
@@ -26,9 +27,10 @@ export function Home() {
         <p className="mx-auto mt-2 max-w-md text-base text-slate-700 sm:text-lg">
           Quick social games, bold visuals, and just enough chaos.
         </p>
+        <PwaInstallPrompt />
       </header>
 
-      <main className="mx-auto mt-8 max-w-md px-4">
+      <main className="mx-auto mt-8 max-w-md px-4 pb-24">
         <PhaseShell className="gap-4 px-0">
           <PhaseHeader
             title="Pick A Game"
@@ -62,6 +64,12 @@ export function Home() {
             </Link>
           ))}
         </PhaseShell>
+
+        <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-center shadow-sm">
+          <p className="text-sm font-semibold text-amber-700">
+            music incoming(this part is being cooked please wait)
+          </p>
+        </section>
       </main>
     </div>
   )

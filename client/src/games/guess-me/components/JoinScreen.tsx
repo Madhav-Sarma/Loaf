@@ -49,6 +49,8 @@ export function JoinScreen({
     onJoinRoom(roomCode.trim(), playerName.trim());
   };
 
+  const roomCodeSlots = Array.from({ length: 6 }, (_, index) => roomCode[index] ?? "");
+
   return (
     <div className="phase-bg min-h-screen">
       <PhaseShell>
@@ -134,7 +136,14 @@ export function JoinScreen({
                   id="roomCode"
                   placeholder="Enter room code..."
                   value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    setRoomCode(
+                      e.target.value
+                        .toUpperCase()
+                        .replace(/[^A-Z0-9]/g, "")
+                        .slice(0, 6)
+                    )
+                  }
                   maxLength={6}
                   // 💡 Make the input uppercase as you type for consistency
                   className="h-14 rounded-xl border-white/60 bg-white/80 text-center text-2xl tracking-[0.35em] font-black uppercase"
@@ -142,6 +151,21 @@ export function JoinScreen({
                     if (e.key === "Enter") handleJoin();
                   }}
                 />
+                <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 p-3 shadow-inner shadow-cyan-300/20">
+                  <div className="flex items-center justify-between gap-2">
+                    {roomCodeSlots.map((char, index) => (
+                      <div
+                        key={index}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300/70 bg-white font-mono text-lg font-black text-cyan-700"
+                      >
+                        {char || "-"}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-center text-xs font-medium text-cyan-700/90">
+                    Enter the 6-character room code shared by your host
+                  </p>
+                </div>
               </div>
               <AnimatedButton
                 className="bg-linear-to-r from-cyan-500 via-sky-400 to-indigo-500"

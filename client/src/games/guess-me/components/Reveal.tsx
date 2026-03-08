@@ -79,7 +79,23 @@ export function Reveal({
 
       {/* Score breakdown */}
       {scoreResults.length > 0 && (
-        <GameCard className="w-full max-w-md" title="Points Earned">
+        <GameCard className="relative w-full max-w-md overflow-hidden" title="Points Earned">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            {scoreResults.slice(0, 4).map((result, index) => (
+              <span
+                key={`${result.playerId}-${index}`}
+                className="score-pop absolute text-sm font-black text-cyan-200"
+                style={{
+                  left: `${14 + index * 20}%`,
+                  top: `${72 - index * 10}%`,
+                  animationDelay: `${index * 120}ms`,
+                }}
+              >
+                {result.pointsEarned > 0 ? "+" : ""}
+                {result.pointsEarned} pts
+              </span>
+            ))}
+          </div>
           <div className="space-y-2">
             {scoreResults.map((result, index) => {
               const playerName =

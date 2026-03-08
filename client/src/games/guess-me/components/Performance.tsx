@@ -7,6 +7,8 @@
 // Actors perform sequentially (in line), one after another.
 // ============================================================
 
+import { useEffect, useState } from "react";
+
 import type { GameState } from "../engine/gameTypes";
 import { getCurrentPerformer } from "../engine/gameEngine";
 import { Mic2, Timer } from "lucide-react";
@@ -35,6 +37,26 @@ export function Performance({
 
   const performerIndex = round.currentPerformerIndex + 1;
   const totalPerformers = round.actorIds.length;
+  const [countdown, setCountdown] = useState(3);
+  const [showCountdown, setShowCountdown] = useState(true);
+
+  useEffect(() => {
+    setCountdown(3);
+    setShowCountdown(true);
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setShowCountdown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 650);
+
+    return () => clearInterval(interval);
+  }, [performer.id, round.currentPerformerIndex]);
 
   return (
     <PhaseShell>
@@ -59,6 +81,18 @@ export function Performance({
             </p>
           </div>
       </GameCard>
+
+      {showCountdown && (
+        <div className="glass-surface pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-slate-950/55">
+          <div className="text-center">
+            <p className="mb-3 text-sm font-bold uppercase tracking-widest text-cyan-200">Performance starts in</p>
+            <p className="bounce-soft text-8xl font-black text-white sm:text-9xl">
+              {countdown > 0 ? countdown : "🎭"}
+            </p>
+            <p className="mt-3 text-2xl font-bold text-fuchsia-200">Perform!</p>
+          </div>
+        </div>
+      )}
 
       {/* Role-specific messages */}
       {isPerformer && (

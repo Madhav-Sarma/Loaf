@@ -10,12 +10,13 @@
 // Wigggle Widget for the room code display.
 // ============================================================
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Crown, Dice6, Settings2, Timer, Users } from "lucide-react";
 
 import type { GameState, GameSettings } from "../engine/gameTypes";
+import type { CopyIconHandle } from "@/components/ui/copy";
 import { Badge } from "@/components/ui/badge";
-import { Widget, WidgetContent, WidgetHeader, WidgetTitle } from "@/components/ui/widget";
+import { CopyIcon } from "@/components/ui/copy";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -46,6 +47,19 @@ export function Lobby({
 
   const [numberMin, setNumberMin] = useState(settings.numberRange.min);
   const [numberMax, setNumberMax] = useState(settings.numberRange.max);
+  const copyIconRef = useRef<CopyIconHandle>(null);
+
+  const handleCopyRoomCode = async () => {
+    try {
+      await navigator.clipboard.writeText(gameState.roomId.toUpperCase());
+      copyIconRef.current?.startAnimation?.();
+      setTimeout(() => {
+        copyIconRef.current?.stopAnimation?.();
+      }, 1400);
+    } catch {
+      // Copy failed silently
+    }
+  };
 
   return (
     <PhaseShell className="max-w-2xl">
@@ -56,17 +70,20 @@ export function Lobby({
         roundLabel={`Players ${gameState.players.length}`}
       />
 
-      {/* Room Code — Wigggle Widget gives it a dashboard-style look */}
-      <Widget size="sm" className="border-orange-200 bg-linear-to-b from-orange-50 to-amber-100 shadow-lg shadow-orange-500/15">
-        <WidgetHeader className="justify-center">
-          <WidgetTitle className="text-orange-600 text-xs tracking-wide uppercase">Room Code</WidgetTitle>
-        </WidgetHeader>
-        <WidgetContent>
-          <span className="text-4xl font-black tracking-[0.4em] text-orange-700 animate-pulse">
-            {gameState.roomId}
-          </span>
-        </WidgetContent>
-      </Widget>
+      {/* Room Code display with animated copy action */}
+      <div className="group relative inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 p-0.5 shadow-lg shadow-cyan-500/30">
+        <div className="relative rounded-[calc(0.875rem-2px)] bg-gradient-to-r from-white/95 to-sky-50/90 px-4 py-2 dark:from-slate-900/95 dark:to-indigo-950/80">
+          <p className="font-mono text-lg font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-indigo-600 dark:from-cyan-300 dark:to-indigo-400">
+            {gameState.roomId.toUpperCase()}
+          </p>
+        </div>
+        <button
+          onClick={handleCopyRoomCode}
+          className="mr-0.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 p-2 text-white shadow-md shadow-cyan-500/30 transition-all duration-200 hover:scale-110 active:scale-95 dark:shadow-indigo-500/20"
+        >
+          <CopyIcon ref={copyIconRef} size={18} />
+        </button>
+      </div>
 
       {/* Player List — shadcn Card */}
       <GameCard className="w-full" title={`Players (${gameState.players.length})`}>
@@ -74,7 +91,7 @@ export function Lobby({
           {gameState.players.map((player) => (
             <div
               key={player.id}
-              className="rounded-2xl border border-white/60 bg-white/75 p-3 shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
+              className="rounded-2xl border border-white/60 bg-white/75 p-3 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 dark:border-indigo-200/25 dark:bg-slate-800/75"
             >
               <div className="flex items-center justify-between gap-2">
                 <PlayerAvatar
@@ -83,7 +100,7 @@ export function Lobby({
                   isSelf={player.id === currentPlayerId}
                 />
                 {player.isHost ? (
-                  <Badge className="bg-amber-100 text-amber-700">
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/20 dark:text-amber-200">
                     <Crown className="size-3.5" />
                     Host
                   </Badge>
@@ -108,7 +125,7 @@ export function Lobby({
         >
             {/* Number Range */}
             <div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-center">
-              <Label className="text-sm font-semibold text-slate-700">Number Range</Label>
+              <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Number Range</Label>
               <div className="flex items-center gap-2">
                 <Input
                 type="number"
@@ -118,10 +135,10 @@ export function Lobby({
                   setNumberMin(val);
                   onUpdateSettings({ numberRange: { min: val, max: numberMax } });
                 }}
-                className="h-11 w-20 rounded-xl border-white/60 bg-white/80 text-center text-base font-bold"
+                className="h-11 w-20 rounded-xl border-white/60 bg-white/80 text-center text-base font-bold text-slate-900 dark:border-indigo-200/30 dark:bg-slate-800/90 dark:text-slate-100"
                 min={1}
               />
-              <span className="text-slate-500">to</span>
+              <span className="text-slate-500 dark:text-slate-300">to</span>
               <Input
                 type="number"
                 value={numberMax}
@@ -130,7 +147,7 @@ export function Lobby({
                   setNumberMax(val);
                   onUpdateSettings({ numberRange: { min: numberMin, max: val } });
                 }}
-                className="h-11 w-20 rounded-xl border-white/60 bg-white/80 text-center text-base font-bold"
+                className="h-11 w-20 rounded-xl border-white/60 bg-white/80 text-center text-base font-bold text-slate-900 dark:border-indigo-200/30 dark:bg-slate-800/90 dark:text-slate-100"
                 min={numberMin + 1}
               />
               </div>
@@ -138,13 +155,13 @@ export function Lobby({
 
             {/* Actors per round */}
             <div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-center">
-              <Label className="text-sm font-semibold text-slate-700">Actors/Round</Label>
+              <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Actors/Round</Label>
               <select
                 value={settings.actorsPerRound}
                 onChange={(e) =>
                   onUpdateSettings({ actorsPerRound: parseInt(e.target.value, 10) })
                 }
-                className="h-11 rounded-xl border border-white/60 bg-white/80 px-3 text-sm"
+                className="h-11 rounded-xl border border-white/60 bg-white/80 px-3 text-sm text-slate-900 dark:border-indigo-200/30 dark:bg-slate-800/90 dark:text-slate-100"
               >
                 {[1, 2, 3].map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -154,13 +171,13 @@ export function Lobby({
 
             {/* Total rounds */}
             <div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-center">
-              <Label className="text-sm font-semibold text-slate-700">Total Rounds</Label>
+              <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Total Rounds</Label>
               <select
                 value={settings.totalRounds}
                 onChange={(e) =>
                   onUpdateSettings({ totalRounds: parseInt(e.target.value, 10) })
                 }
-                className="h-11 rounded-xl border border-white/60 bg-white/80 px-3 text-sm"
+                className="h-11 rounded-xl border border-white/60 bg-white/80 px-3 text-sm text-slate-900 dark:border-indigo-200/30 dark:bg-slate-800/90 dark:text-slate-100"
               >
                 {[3, 5, 7, 10].map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -170,7 +187,7 @@ export function Lobby({
 
             {/* Guesser selection mode */}
             <div className="grid gap-2 sm:grid-cols-[140px_1fr] sm:items-center">
-              <Label className="text-sm font-semibold text-slate-700">Guesser Pick</Label>
+              <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Guesser Pick</Label>
               <select
                 value={settings.guesserSelectionMode}
                 onChange={(e) =>
@@ -178,7 +195,7 @@ export function Lobby({
                     guesserSelectionMode: e.target.value as "clockwise" | "random",
                   })
                 }
-                className="h-11 rounded-xl border border-white/60 bg-white/80 px-3 text-sm"
+                className="h-11 rounded-xl border border-white/60 bg-white/80 px-3 text-sm text-slate-900 dark:border-indigo-200/30 dark:bg-slate-800/90 dark:text-slate-100"
               >
                 <option value="clockwise">Clockwise (fair)</option>
                 <option value="random">Random (chaotic)</option>
@@ -203,7 +220,7 @@ export function Lobby({
 
       {/* Non-host waiting message */}
       {!isHost && (
-        <p className="rounded-full bg-white/70 px-4 py-2 text-center text-sm font-semibold text-slate-600 animate-pulse">
+        <p className="animate-pulse rounded-full bg-white/70 px-4 py-2 text-center text-sm font-semibold text-slate-600 dark:bg-slate-800/75 dark:text-slate-200">
           <Timer className="mr-1 inline size-4 text-cyan-500" />
           Waiting for the host to start the game...
         </p>

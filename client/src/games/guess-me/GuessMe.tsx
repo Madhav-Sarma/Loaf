@@ -92,11 +92,7 @@ export function GuessMe() {
         onCreateRoom={createRoom}
         onJoinRoom={joinRoom}
         isConnecting={connectionState === "joining"}
-        error={
-          connectionState === "disconnected"
-            ? "Connecting to server..."
-            : error
-        }
+        error={error ?? (connectionState === "disconnected" ? "Trying to connect to server..." : null)}
       />
     );
   }
@@ -113,26 +109,113 @@ export function GuessMe() {
     setHasFinishedGuessing(false);
   }
 
+  const phaseContent = (
+    <>
+      {gameState.phase === "lobby" && (
+        <Lobby
+          gameState={gameState}
+          currentPlayerId={playerId}
+          onUpdateSettings={updateSettings}
+          onStartGame={startGame}
+        />
+      )}
+
+      {gameState.phase === "role-assignment" && (
+        <RoleReveal
+          gameState={gameState}
+          currentPlayerId={playerId}
+          onContinue={roleContinue}
+        />
+      )}
+
+      {gameState.phase === "number-selection" && (
+        <NumberSelection
+          key={playerId}
+          state={gameState}
+          playerId={playerId}
+          onSubmitNumber={submitNumber}
+        />
+      )}
+
+      {gameState.phase === "prompt-writing" && (
+        <PromptWriting
+          state={gameState}
+          playerId={playerId}
+          onSubmitPrompt={submitPrompt}
+        />
+      )}
+
+      {gameState.phase === "performance" && (
+        <Performance
+          state={gameState}
+          playerId={playerId}
+          onCompletePerformance={completePerformance}
+        />
+      )}
+
+      {gameState.phase === "guessing" && (
+        <Guessing
+          key={playerId}
+          state={gameState}
+          playerId={playerId}
+          hasFinished={hasFinishedGuessing}
+          onSubmitGuess={submitGuess}
+          onFinishGuessing={() => {
+            setHasFinishedGuessing(true);
+            finishGuessing();
+          }}
+        />
+      )}
+
+      {gameState.phase === "guesser-review" && (
+        <GuesserReview
+          key={playerId}
+          state={gameState}
+          playerId={playerId}
+          onSubmitGuesserGuess={submitGuess}
+          onFinalize={finalizeGuesserReview}
+        />
+      )}
+
+      {gameState.phase === "reveal" && (
+        <Reveal
+          state={gameState}
+          playerId={playerId}
+          scoreResults={scoreResults}
+          onContinue={revealContinue}
+        />
+      )}
+
+      {gameState.phase === "game-over" && (
+        <GameOver
+          state={gameState}
+          playerId={playerId}
+          onPlayAgain={playAgain}
+        />
+      )}
+    </>
+  );
+
   return (
     <div className="phase-bg min-h-screen">
       <header className="mx-auto max-w-xl px-4 pt-4 sm:pt-5">
-        <Card className="glass-surface gap-2 border-white/60 p-3 sm:p-4">
+        <Card className="glass-surface gap-2 border-indigo-200/20 p-3 sm:p-4">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="inline-flex items-center gap-2 text-lg font-black text-slate-900 sm:text-xl">
+            <h1 className="inline-flex items-center gap-2 text-lg font-black tracking-wide text-slate-50 sm:text-xl">
               <span className="text-2xl">🍞</span>
               Guess Me
             </h1>
-            <Badge className="bg-orange-100 text-orange-700">
+            <Badge className="bg-fuchsia-500/25 text-fuchsia-100 border border-fuchsia-300/30">
               <Sparkles className="size-3.5" />
               Live
             </Badge>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="border-cyan-200 bg-cyan-100 text-cyan-700 text-xs">
+            <Badge variant="outline" className="border-cyan-300/40 bg-cyan-400/20 text-cyan-100 text-xs">
               <Timer className="size-3.5" />
               Round {Math.max(gameState.roundCount, 1)} / {gameState.settings.totalRounds}
             </Badge>
-            <Badge variant="secondary" className="text-xs font-semibold capitalize">
+            <Badge variant="secondary" className="border border-indigo-300/30 bg-indigo-400/20 text-xs font-semibold capitalize text-indigo-50">
               {phaseLabel[gameState.phase] ?? gameState.phase}
             </Badge>
           </div>
@@ -140,88 +223,9 @@ export function GuessMe() {
       </header>
 
       <main className="pb-8">
-        {gameState.phase === "lobby" && (
-          <Lobby
-            gameState={gameState}
-            currentPlayerId={playerId}
-            onUpdateSettings={updateSettings}
-            onStartGame={startGame}
-          />
-        )}
-
-        {gameState.phase === "role-assignment" && (
-          <RoleReveal
-            gameState={gameState}
-            currentPlayerId={playerId}
-            onContinue={roleContinue}
-          />
-        )}
-
-        {gameState.phase === "number-selection" && (
-          <NumberSelection
-            key={playerId}
-            state={gameState}
-            playerId={playerId}
-            onSubmitNumber={submitNumber}
-          />
-        )}
-
-        {gameState.phase === "prompt-writing" && (
-          <PromptWriting
-            state={gameState}
-            playerId={playerId}
-            onSubmitPrompt={submitPrompt}
-          />
-        )}
-
-        {gameState.phase === "performance" && (
-          <Performance
-            state={gameState}
-            playerId={playerId}
-            onCompletePerformance={completePerformance}
-          />
-        )}
-
-        {gameState.phase === "guessing" && (
-          <Guessing
-            key={playerId}
-            state={gameState}
-            playerId={playerId}
-            hasFinished={hasFinishedGuessing}
-            onSubmitGuess={submitGuess}
-            onFinishGuessing={() => {
-              setHasFinishedGuessing(true);
-              finishGuessing();
-            }}
-          />
-        )}
-
-        {gameState.phase === "guesser-review" && (
-          <GuesserReview
-            key={playerId}
-            state={gameState}
-            playerId={playerId}
-            onSubmitGuesserGuess={submitGuess}
-            onFinalize={finalizeGuesserReview}
-          />
-        )}
-
-        {gameState.phase === "reveal" && (
-          <Reveal
-            state={gameState}
-            playerId={playerId}
-            scoreResults={scoreResults}
-            onContinue={revealContinue}
-          />
-        )}
-
-        {gameState.phase === "game-over" && (
-          <GameOver
-            state={gameState}
-            playerId={playerId}
-            onPlayAgain={playAgain}
-          />
-        )}
+        <div key={`${gameState.phase}-${gameState.roundCount}`} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+          {phaseContent}
+        </div>
       </main>
     </div>
   );
