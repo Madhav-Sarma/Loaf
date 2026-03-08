@@ -1,5 +1,5 @@
 // ============================================================
-// App.tsx — Main component for Guess Me (Multiplayer Version)
+// GuessMe.tsx — Main component for Guess Me (Multiplayer Version)
 // ============================================================
 //
 // 💡 HOW THE MULTIPLAYER FLOW WORKS:
@@ -33,7 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useGameSocket } from "./hooks/useGameSocket";
 
-export function App() {
+export function GuessMe() {
   // 💡 The useGameSocket hook manages EVERYTHING about the connection:
   // - Connecting to the server
   // - Creating/joining rooms

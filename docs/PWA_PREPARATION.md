@@ -8,7 +8,7 @@ after the first visit.
 
 ## Files to Create
 
-### 1. `client/games/guess-me/public/manifest.json`
+### 1. `client/public/manifest.json`
 
 ```json
 {
@@ -37,8 +37,8 @@ after the first visit.
 ### 2. Icons
 
 Create two PNG icons:
-- `client/games/guess-me/public/icons/icon-192.png` (192×192)
-- `client/games/guess-me/public/icons/icon-512.png` (512×512)
+- `client/public/icons/icon-192.png` (192×192)
+- `client/public/icons/icon-512.png` (512×512)
 
 Use a bread/loaf emoji or custom logo.
 
