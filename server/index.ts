@@ -91,6 +91,12 @@ import {
 // set the port. We fall back to 3001 for local development.
 const PORT = process.env.PORT ?? 3001;
 
+// Allow short app backgrounding (for share flows, app switching, etc.)
+// without immediately removing players from rooms.
+const DISCONNECT_GRACE_MS = Number(process.env.DISCONNECT_GRACE_MS ?? 90_000);
+const SOCKET_PING_TIMEOUT_MS = Number(process.env.SOCKET_PING_TIMEOUT_MS ?? 120_000);
+const SOCKET_PING_INTERVAL_MS = Number(process.env.SOCKET_PING_INTERVAL_MS ?? 25_000);
+
 // ============================================================
 // ROOM MANAGEMENT
 // ============================================================
@@ -118,6 +124,14 @@ const rooms = new Map<string, Room>();
 // 💡 Maps socket IDs to room codes so we can find a player's
 // room when they send an action or disconnect.
 const socketToRoom = new Map<string, string>();
+
+interface PendingDisconnect {
+  roomCode: string;
+  timeout: NodeJS.Timeout;
+}
+
+// Tracks temporary disconnects so we can give clients time to recover.
+const pendingDisconnects = new Map<string, PendingDisconnect>();
 
 /**
  * Generates a random 6-character room code.
@@ -182,6 +196,12 @@ const io = new Server(httpServer, {
     origin: corsOrigins,
     methods: ["GET", "POST"],
   },
+  pingTimeout: SOCKET_PING_TIMEOUT_MS,
+  pingInterval: SOCKET_PING_INTERVAL_MS,
+  connectionStateRecovery: {
+    maxDisconnectionDuration: DISCONNECT_GRACE_MS,
+    skipMiddlewares: true,
+  },
 });
 
 // 💡 Simple health check endpoint — useful for monitoring and
@@ -218,6 +238,41 @@ function broadcastState(room: Room): void {
   });
 }
 
+/**
+ * Permanently removes a disconnected player from room state.
+ */
+function removeDisconnectedPlayer(socketId: string): void {
+  const roomCode = socketToRoom.get(socketId);
+  socketToRoom.delete(socketId);
+
+  if (!roomCode) return;
+
+  const room = rooms.get(roomCode);
+  if (!room) return;
+
+  const player = room.gameState.players.find((p) => p.id === socketId);
+  const playerName = player?.name ?? "Unknown";
+
+  logPlayerEvent(playerName, `Disconnected from room ${roomCode}`);
+
+  // Remove the player using the engine.
+  room.gameState = removePlayer(room.gameState, socketId);
+
+  // Also clean up the finishedGuessers tracking.
+  room.finishedGuessers.delete(socketId);
+
+  // Clean up empty rooms to prevent memory leaks.
+  if (room.gameState.players.length === 0) {
+    rooms.delete(roomCode);
+    logRoomEvent(roomCode, "Deleted (no players remaining)");
+    return;
+  }
+
+  // Let remaining players know someone left.
+  logRoomEvent(roomCode, `${room.gameState.players.length} players remaining`);
+  broadcastState(room);
+}
+
 // ============================================================
 // SOCKET.IO EVENT HANDLERS
 // ============================================================
@@ -237,6 +292,20 @@ function broadcastState(room: Room): void {
 
 io.on("connection", (socket) => {
   logServer(`Player connected: ${socket.id}`);
+
+  // If this socket recovered after a transient disconnect, cancel cleanup.
+  const pendingDisconnect = pendingDisconnects.get(socket.id);
+  if (pendingDisconnect) {
+    clearTimeout(pendingDisconnect.timeout);
+    pendingDisconnects.delete(socket.id);
+
+    logServer(`Player reconnected before cleanup: ${socket.id}`);
+
+    const room = rooms.get(pendingDisconnect.roomCode);
+    if (room) {
+      broadcastState(room);
+    }
+  }
 
   // ----------------------------------------------------------
   // ROOM: CREATE
@@ -572,50 +641,54 @@ io.on("connection", (socket) => {
   });
 
   // ----------------------------------------------------------
-  // DISCONNECT (with proper room cleanup)
+  // DISCONNECT (with reconnect grace period)
   // ----------------------------------------------------------
   // 💡 This fires when a player's connection drops (close tab,
-  // lose internet, etc.). We clean up their data so the game
-  // can continue without them.
+  // lose internet, temporary app background, etc.).
   //
-  // Cleanup steps:
-  // 1. Remove player from socketToRoom mapping
-  // 2. Remove player from the game state using the engine
-  // 3. Remove from finishedGuessers set (if applicable)
-  // 4. If room is empty → delete the room entirely
-  // 5. Otherwise → broadcast updated state to remaining players
+  // For transient disconnects, we delay cleanup so clients have
+  // time to reconnect without losing their room.
   // ----------------------------------------------------------
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
     const roomCode = socketToRoom.get(socket.id);
-    socketToRoom.delete(socket.id);
 
-    if (roomCode) {
-      const room = rooms.get(roomCode);
-      if (room) {
-        const player = room.gameState.players.find((p) => p.id === socket.id);
-        const playerName = player?.name ?? "Unknown";
-
-        logPlayerEvent(playerName, `Disconnected from room ${roomCode}`);
-
-        // Remove the player using the engine
-        room.gameState = removePlayer(room.gameState, socket.id);
-
-        // Also clean up the finishedGuessers tracking
-        room.finishedGuessers.delete(socket.id);
-
-        // Clean up empty rooms to prevent memory leaks
-        if (room.gameState.players.length === 0) {
-          rooms.delete(roomCode);
-          logRoomEvent(roomCode, "Deleted (no players remaining)");
-        } else {
-          // Let remaining players know someone left
-          logRoomEvent(roomCode, `${room.gameState.players.length} players remaining`);
-          broadcastState(room);
-        }
-      }
+    if (!roomCode) {
+      logServer(`Player disconnected: ${socket.id} (${reason})`);
+      return;
     }
 
-    logServer(`Player disconnected: ${socket.id}`);
+    // Explicit client disconnects should clean up immediately.
+    if (reason === "client namespace disconnect") {
+      const pending = pendingDisconnects.get(socket.id);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        pendingDisconnects.delete(socket.id);
+      }
+
+      removeDisconnectedPlayer(socket.id);
+      logServer(`Player disconnected: ${socket.id} (${reason})`);
+      return;
+    }
+
+    const existingPending = pendingDisconnects.get(socket.id);
+    if (existingPending) {
+      clearTimeout(existingPending.timeout);
+    }
+
+    const graceSeconds = Math.round(DISCONNECT_GRACE_MS / 1000);
+    const room = rooms.get(roomCode);
+    const player = room?.gameState.players.find((p) => p.id === socket.id);
+    const playerName = player?.name ?? "Unknown";
+
+    const timeout = setTimeout(() => {
+      pendingDisconnects.delete(socket.id);
+      removeDisconnectedPlayer(socket.id);
+      logServer(`Grace timeout expired for ${socket.id}`);
+    }, DISCONNECT_GRACE_MS);
+
+    pendingDisconnects.set(socket.id, { roomCode, timeout });
+    logPlayerEvent(playerName, `Temporarily disconnected from room ${roomCode}; waiting ${graceSeconds}s`);
+    logServer(`Player disconnected: ${socket.id} (${reason})`);
   });
 });
 

@@ -98,6 +98,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const roomCodeRef = useRef<string | null>(null);
 
   // Game state (updated whenever the server broadcasts)
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -121,12 +122,32 @@ export function useGameSocket(): UseGameSocketReturn {
     socket.on("connect", () => {
       console.log("🔌 Connected to server:", socket.id);
       setPlayerId(socket.id ?? null);
+
+      if (roomCodeRef.current) {
+        if (socket.recovered) {
+          setConnectionState("in-room");
+          setError(null);
+        } else {
+          setConnectionState("connected");
+          setError("Connection was restored, but room session expired. Join your room again.");
+        }
+        return;
+      }
+
       setConnectionState("connected");
       setError(null);
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔌 Disconnected from server");
+    socket.on("disconnect", (reason) => {
+      console.log("🔌 Disconnected from server:", reason);
+
+      // If we were already in a room, keep game UI mounted while
+      // Socket.IO tries to recover automatically.
+      if (roomCodeRef.current) {
+        setError("Connection lost. Reconnecting...");
+        return;
+      }
+
       setConnectionState("disconnected");
     });
 
@@ -146,14 +167,19 @@ export function useGameSocket(): UseGameSocketReturn {
     // it never computes state locally. The server is the
     // single source of truth.
     socket.on(GameEvents.STATE, (data: { gameState: GameState; scoreResults: ScoreResult[] }) => {
+      roomCodeRef.current = data.gameState.roomId;
+      setRoomCode(data.gameState.roomId);
       setGameState(data.gameState);
       setScoreResults(data.scoreResults ?? []);
+      setConnectionState("in-room");
+      setError(null);
     });
 
     // 💡 Cleanup function — runs when the component unmounts.
     // We disconnect the socket to prevent memory leaks and
     // ghost connections on the server.
     return () => {
+      roomCodeRef.current = null;
       socket.disconnect();
     };
   }, []); // Empty dependency array = runs once on mount
@@ -187,6 +213,7 @@ export function useGameSocket(): UseGameSocketReturn {
       { playerName },
       (response: { success: boolean; roomCode?: string; gameState?: GameState; error?: string }) => {
         if (response.success && response.roomCode && response.gameState) {
+          roomCodeRef.current = response.roomCode;
           setRoomCode(response.roomCode);
           setGameState(response.gameState);
           setConnectionState("in-room");
@@ -210,7 +237,9 @@ export function useGameSocket(): UseGameSocketReturn {
       { roomCode: code, playerName },
       (response: { success: boolean; gameState?: GameState; error?: string }) => {
         if (response.success && response.gameState) {
-          setRoomCode(code.toUpperCase());
+          const normalizedCode = code.toUpperCase();
+          roomCodeRef.current = normalizedCode;
+          setRoomCode(normalizedCode);
           setGameState(response.gameState);
           setConnectionState("in-room");
         } else {
