@@ -6,6 +6,14 @@ import { PwaInstallPrompt } from '@/components/PwaInstallPrompt'
 
 const games = [
   {
+    id: 'wordle',
+    name: 'Wordle',
+    description: 'Single-player word puzzle with smart duplicate-letter logic.',
+    emoji: '🔤',
+    path: '/games/wordle',
+    players: '1',
+  },
+  {
     id: 'battleship',
     name: 'Battleship',
     description: 'Place your fleet, share a room code, and duel in real-time.',

@@ -148,3 +148,18 @@ Generate code step-by-step and explain important concepts such as:
 * game synchronization
 * multiplayer architecture
 * PWA installation
+
+---
+
+## Game Versioning Rule
+
+From now on, every game must keep an explicit version number.
+
+Requirements:
+
+* each game module must define a version string (recommended format: `MAJOR.MINOR.PATCH`)
+* include that version in game metadata or a shared game registry used by both client and server
+* bump `PATCH` for bug fixes
+* bump `MINOR` for backward-compatible gameplay/features
+* bump `MAJOR` for breaking game-rule or protocol changes
+* when a game version is bumped, update all corresponding client/server/shared references in the same change

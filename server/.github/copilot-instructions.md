@@ -269,6 +269,21 @@ If multiple approaches exist, choose the one that is easiest to understand.
 
 ---
 
+# Game Versioning Rule
+
+From now on, every game must keep an explicit version number.
+
+Requirements:
+
+* each game module must define a version string (recommended format: `MAJOR.MINOR.PATCH`)
+* include that version in game metadata or a shared game registry used by both client and server
+* bump `PATCH` for bug fixes
+* bump `MINOR` for backward-compatible gameplay/features
+* bump `MAJOR` for breaking game-rule or protocol changes
+* when a game version is bumped, update all corresponding client/server/shared references in the same change
+
+---
+
 # Long-Term Goal
 
 Loaf should become a **platform for many party games**.

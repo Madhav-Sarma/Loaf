@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:wordle:accepted": "node scripts/generate-wordle-accepted-dwyl.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
