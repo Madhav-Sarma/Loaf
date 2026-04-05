@@ -525,7 +525,11 @@ export function useBattleshipRoom(): UseBattleshipRoomResult {
         const winnerId = attackOutcome.allShipsSunk
           ? message.payload.fromClientId
           : null
-        const nextTurnId = winnerId ? null : snapshot.clientId
+        const nextTurnId = winnerId
+          ? null
+          : attackOutcome.result === 'miss'
+            ? snapshot.clientId
+            : message.payload.fromClientId
 
         if (winnerId) {
           setPhase('finished')
