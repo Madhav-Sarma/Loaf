@@ -573,6 +573,12 @@ export function useBattleshipRoom(): UseBattleshipRoomResult {
       }
 
       if (message.type === 'attack-result') {
+        // Only the player who fired this attack should process the result.
+        // This avoids accidental turn corruption from echoed or stale messages.
+        if (!message.payload.attackId.startsWith(`${snapshot.clientId}-`)) {
+          return
+        }
+
         const coordinate = { x: message.payload.x, y: message.payload.y }
         const shotKey = toCellKey(coordinate)
 
@@ -597,7 +603,12 @@ export function useBattleshipRoom(): UseBattleshipRoomResult {
           return
         }
 
-        setTurnClientId(message.payload.nextTurnClientId)
+        const nextTurnClientId =
+          message.payload.result === 'miss'
+            ? snapshot.peer?.clientId ?? message.payload.nextTurnClientId
+            : snapshot.clientId
+
+        setTurnClientId(nextTurnClientId)
 
         if (message.payload.result === 'sunk') {
           emitSound('sunk', 'Enemy ship sunk.')

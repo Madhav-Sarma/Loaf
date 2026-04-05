@@ -280,7 +280,7 @@ export function Battleship() {
     onCellDrop,
   }: GridViewProps) => {
     return (
-      <section className="rounded-3xl border border-orange-300/30 bg-white/75 p-2.5 shadow-lg backdrop-blur-md dark:border-sky-300/20 dark:bg-slate-900/50 sm:p-3">
+      <section className="rounded-3xl border border-orange-300/30 bg-amber-50/72 p-2.5 shadow-lg backdrop-blur-md dark:border-sky-300/20 dark:bg-slate-900/50 sm:p-3">
         <h3 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-800 dark:text-slate-100">
           {title}
         </h3>
@@ -337,7 +337,7 @@ export function Battleship() {
                       hasShip && showShips &&
                         'border-emerald-400/60 bg-emerald-500/25 text-emerald-900 dark:text-emerald-100',
                       !hasShip && !isHit && !isMiss &&
-                        'border-slate-300/70 bg-white/70 text-slate-500 dark:border-slate-600 dark:bg-slate-800/65 dark:text-slate-400',
+                        'border-slate-300/70 bg-amber-50/70 text-slate-500 dark:border-slate-600 dark:bg-slate-800/65 dark:text-slate-400',
                       interactive && !disabled &&
                         'cursor-crosshair hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-200/30 dark:hover:bg-cyan-500/20',
                       disabled && 'cursor-not-allowed opacity-70',
@@ -368,10 +368,10 @@ export function Battleship() {
   return (
     <div className="phase-bg min-h-screen pb-12">
       <header className="mx-auto max-w-5xl px-4 pt-6 sm:pt-8">
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-900/10 bg-white/70 p-3 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-slate-900/55">
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-900/10 bg-amber-50/65 p-3 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-slate-900/55">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300/80 bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 transition hover:-translate-y-0.5 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300/80 bg-amber-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 transition hover:-translate-y-0.5 hover:border-orange-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
           >
             <ArrowLeft className="size-4" />
             Back
@@ -386,7 +386,7 @@ export function Battleship() {
 
       <main className="mx-auto mt-5 w-full max-w-5xl space-y-4 px-4">
         {connectionStage !== 'in-room' ? (
-          <Card className="rounded-3xl border border-orange-300/35 bg-white/85 shadow-xl dark:border-sky-300/20 dark:bg-slate-900/55">
+          <Card className="rounded-3xl border border-orange-300/35 bg-amber-50/78 shadow-xl dark:border-sky-300/20 dark:bg-slate-900/55">
             <CardHeader>
               <CardTitle className="text-lg font-black text-slate-900 dark:text-slate-100">
                 Join Room
@@ -450,7 +450,7 @@ export function Battleship() {
           </Card>
         ) : (
           <>
-            <Card className="rounded-3xl border border-orange-300/35 bg-white/85 shadow-xl dark:border-sky-300/20 dark:bg-slate-900/55">
+            <Card className="rounded-3xl border border-orange-300/35 bg-amber-50/78 shadow-xl dark:border-sky-300/20 dark:bg-slate-900/55">
               <CardContent className="space-y-2 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-black uppercase tracking-[0.16em] text-slate-700 dark:text-slate-100">
@@ -469,7 +469,7 @@ export function Battleship() {
 
             {phase === 'setup' ? (
               <>
-                <Card className="rounded-3xl border border-orange-300/35 bg-white/85 shadow-xl dark:border-sky-300/20 dark:bg-slate-900/55">
+                <Card className="rounded-3xl border border-orange-300/35 bg-amber-50/78 shadow-xl dark:border-sky-300/20 dark:bg-slate-900/55">
                   <CardContent className="space-y-3 py-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
@@ -526,7 +526,7 @@ export function Battleship() {
                               'rounded-2xl border p-2 text-center transition-all',
                               isSelected
                                 ? 'border-cyan-400 bg-cyan-100/65 dark:bg-cyan-500/20'
-                                : 'border-slate-300/60 bg-white/75 dark:border-slate-600 dark:bg-slate-900/65',
+                                : 'border-slate-300/60 bg-amber-50/72 dark:border-slate-600 dark:bg-slate-900/65',
                               isPlaced &&
                                 'border-emerald-400/60 bg-emerald-100/65 dark:bg-emerald-500/20',
                               localReady && 'opacity-50'

@@ -6,19 +6,19 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(0.967 0.006 95);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(0.982 0.004 90);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.982 0.004 90);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: oklch(0.945 0.004 90);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
+  --muted: oklch(0.945 0.004 90);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --accent: oklch(0.945 0.004 90);
   --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.58 0.22 27);
     --border: oklch(0.922 0 0);
@@ -123,10 +123,10 @@
   body {
     @apply antialiased bg-background text-foreground;
     background-image:
-      radial-gradient(circle at 12% 18%, color-mix(in oklab, #ff7b6b 25%, transparent) 0, transparent 40%),
-      radial-gradient(circle at 82% 16%, color-mix(in oklab, #34d6ff 26%, transparent) 0, transparent 42%),
-      radial-gradient(circle at 52% 92%, color-mix(in oklab, #ffe16b 30%, transparent) 0, transparent 46%),
-      linear-gradient(165deg, #fffaf0 0%, #fff3df 50%, #fff9f2 100%);
+      radial-gradient(circle at 12% 18%, color-mix(in oklab, #ff7b6b 18%, transparent) 0, transparent 44%),
+      radial-gradient(circle at 82% 16%, color-mix(in oklab, #34d6ff 16%, transparent) 0, transparent 46%),
+      radial-gradient(circle at 52% 92%, color-mix(in oklab, #ffe16b 20%, transparent) 0, transparent 50%),
+      linear-gradient(165deg, #f4ede0 0%, #ede2d2 50%, #f5ede2 100%);
     min-height: 100dvh;
     }
   html {
@@ -156,7 +156,7 @@
   .phase-bg::before {
     width: 220px;
     height: 220px;
-    background: color-mix(in oklab, #ff8c5a 35%, transparent);
+    background: color-mix(in oklab, #ff8c5a 22%, transparent);
     top: -90px;
     right: -70px;
     animation: float-orb 11s ease-in-out infinite;
@@ -165,7 +165,7 @@
   .phase-bg::after {
     width: 240px;
     height: 240px;
-    background: color-mix(in oklab, #24cdfc 30%, transparent);
+    background: color-mix(in oklab, #24cdfc 18%, transparent);
     bottom: -120px;
     left: -70px;
     animation: float-orb 13s ease-in-out infinite reverse;
