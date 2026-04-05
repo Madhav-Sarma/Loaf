@@ -52,6 +52,7 @@ import type {
   GameSettings,
   GameState,
   Player,
+  RoundState,
   ScoreResult,
 } from "../shared/guess-me/gameTypes.js";
 
@@ -238,6 +239,46 @@ function broadcastState(room: Room): void {
   });
 }
 
+function replacePlayerIdInRound(round: RoundState, oldId: string, newId: string): RoundState {
+  const nextPlayerNumbers: Record<string, number> = {};
+
+  for (const [playerId, number] of Object.entries(round.playerNumbers)) {
+    nextPlayerNumbers[playerId === oldId ? newId : playerId] = number;
+  }
+
+  return {
+    ...round,
+    guesserId: round.guesserId === oldId ? newId : round.guesserId,
+    actorIds: round.actorIds.map((id) => (id === oldId ? newId : id)),
+    actorData: round.actorData.map((actor) =>
+      actor.playerId === oldId ? { ...actor, playerId: newId } : actor
+    ),
+    playerNumbers: nextPlayerNumbers,
+    guesses: round.guesses.map((guess) => ({
+      ...guess,
+      guesserId: guess.guesserId === oldId ? newId : guess.guesserId,
+      actorId: guess.actorId === oldId ? newId : guess.actorId,
+    })),
+  };
+}
+
+function replacePlayerIdInState(state: GameState, oldId: string, newId: string): GameState {
+  if (oldId === newId) return state;
+
+  return {
+    ...state,
+    players: state.players.map((player) =>
+      player.id === oldId ? { ...player, id: newId } : player
+    ),
+    currentRound: state.currentRound
+      ? replacePlayerIdInRound(state.currentRound, oldId, newId)
+      : null,
+    roundHistory: state.roundHistory.map((round) =>
+      replacePlayerIdInRound(round, oldId, newId)
+    ),
+  };
+}
+
 /**
  * Permanently removes a disconnected player from room state.
  */
@@ -392,15 +433,53 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // Only allow joining during lobby
-    if (room.gameState.phase !== "lobby") {
-      callback({ success: false, error: "Game already in progress. Wait for the next game!" });
+    const existingPlayer = room.gameState.players.find(
+      (player) => player.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    // Resume flow: if this name belongs to a temporarily disconnected player,
+    // rebind that player identity to the new socket ID.
+    if (existingPlayer) {
+      const pending = pendingDisconnects.get(existingPlayer.id);
+
+      if (pending && pending.roomCode === normalizedCode) {
+        const oldSocketId = existingPlayer.id;
+        const hadFinishedGuessing = room.finishedGuessers.has(oldSocketId);
+
+        clearTimeout(pending.timeout);
+        pendingDisconnects.delete(oldSocketId);
+
+        room.gameState = replacePlayerIdInState(room.gameState, oldSocketId, socket.id);
+        room.scoreResults = room.scoreResults.map((result) =>
+          result.playerId === oldSocketId
+            ? { ...result, playerId: socket.id }
+            : result
+        );
+
+        room.finishedGuessers.delete(oldSocketId);
+        if (hadFinishedGuessing) {
+          room.finishedGuessers.add(socket.id);
+        }
+
+        socketToRoom.delete(oldSocketId);
+        socketToRoom.set(socket.id, normalizedCode);
+        socket.join(normalizedCode);
+
+        logRoomEvent(normalizedCode, `${trimmedName} resumed session`);
+        logPlayerEvent(trimmedName, `Resumed room ${normalizedCode}`);
+
+        broadcastState(room);
+        callback({ success: true, gameState: room.gameState });
+        return;
+      }
+
+      callback({ success: false, error: "That name is already taken. Try a different one!" });
       return;
     }
 
-    // Prevent duplicate names (case-insensitive comparison)
-    if (room.gameState.players.some((p) => p.name.toLowerCase() === trimmedName.toLowerCase())) {
-      callback({ success: false, error: "That name is already taken. Try a different one!" });
+    // Only allow joining during lobby
+    if (room.gameState.phase !== "lobby") {
+      callback({ success: false, error: "Game already in progress. Wait for the next game!" });
       return;
     }
 

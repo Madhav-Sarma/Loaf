@@ -40,6 +40,9 @@ if (!configuredServerUrl && !isDev) {
 
 const SERVER_URL = configuredServerUrl || "http://localhost:3001";
 
+const ROOM_SESSION_STORAGE_KEY = "guess-me:room-session";
+const ROOM_SESSION_MAX_AGE_MS = 10 * 60 * 1000;
+
 if (!configuredServerUrl && isDev) {
   console.warn(
     "VITE_SERVER_URL is not set. Falling back to http://localhost:3001 for local development."
@@ -99,15 +102,90 @@ export function useGameSocket(): UseGameSocketReturn {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const roomCodeRef = useRef<string | null>(null);
+  const playerNameRef = useRef<string | null>(null);
+  const isResumingRef = useRef(false);
 
   // Game state (updated whenever the server broadcasts)
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [scoreResults, setScoreResults] = useState<ScoreResult[]>([]);
 
+  const saveRoomSession = useCallback((nextRoomCode: string, nextPlayerName: string) => {
+    const normalizedRoomCode = nextRoomCode.toUpperCase();
+    const trimmedPlayerName = nextPlayerName.trim();
+
+    roomCodeRef.current = normalizedRoomCode;
+    playerNameRef.current = trimmedPlayerName;
+    setRoomCode(normalizedRoomCode);
+
+    try {
+      window.localStorage.setItem(
+        ROOM_SESSION_STORAGE_KEY,
+        JSON.stringify({
+          roomCode: normalizedRoomCode,
+          playerName: trimmedPlayerName,
+          savedAt: Date.now(),
+        })
+      );
+    } catch {
+      // Ignore storage errors (private mode, quota, etc.)
+    }
+  }, []);
+
+  const clearRoomSession = useCallback(() => {
+    roomCodeRef.current = null;
+    playerNameRef.current = null;
+    setRoomCode(null);
+
+    try {
+      window.localStorage.removeItem(ROOM_SESSION_STORAGE_KEY);
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
   // ============================================================
   // SOCKET CONNECTION (runs once on mount)
   // ============================================================
   useEffect(() => {
+    try {
+      const rawSession = window.localStorage.getItem(ROOM_SESSION_STORAGE_KEY);
+      if (rawSession) {
+        const parsedSession = JSON.parse(rawSession) as {
+          roomCode?: string;
+          playerName?: string;
+          savedAt?: number;
+        };
+
+        const cachedRoomCode =
+          typeof parsedSession.roomCode === "string"
+            ? parsedSession.roomCode.trim().toUpperCase()
+            : "";
+        const cachedPlayerName =
+          typeof parsedSession.playerName === "string"
+            ? parsedSession.playerName.trim()
+            : "";
+        const cachedSavedAt =
+          typeof parsedSession.savedAt === "number"
+            ? parsedSession.savedAt
+            : 0;
+
+        const isValidSession =
+          cachedRoomCode.length > 0 &&
+          cachedPlayerName.length > 0 &&
+          Date.now() - cachedSavedAt <= ROOM_SESSION_MAX_AGE_MS;
+
+        if (isValidSession) {
+          roomCodeRef.current = cachedRoomCode;
+          playerNameRef.current = cachedPlayerName;
+          setRoomCode(cachedRoomCode);
+        } else {
+          window.localStorage.removeItem(ROOM_SESSION_STORAGE_KEY);
+        }
+      }
+    } catch {
+      // Ignore invalid session payloads.
+    }
+
     // 💡 io() creates a Socket.IO client connection.
     // By default, it:
     // - Connects immediately (autoConnect: true)
@@ -128,8 +206,42 @@ export function useGameSocket(): UseGameSocketReturn {
           setConnectionState("in-room");
           setError(null);
         } else {
-          setConnectionState("connected");
-          setError("Connection was restored, but room session expired. Join your room again.");
+          const savedPlayerName = playerNameRef.current;
+          const savedRoomCode = roomCodeRef.current;
+
+          if (!savedPlayerName || isResumingRef.current) {
+            clearRoomSession();
+            setGameState(null);
+            setScoreResults([]);
+            setConnectionState("connected");
+            setError("Room session expired. Join your room again.");
+            return;
+          }
+
+          isResumingRef.current = true;
+          setConnectionState("joining");
+          setError("Reconnecting to your room...");
+
+          socket.emit(
+            RoomEvents.JOIN,
+            { roomCode: savedRoomCode, playerName: savedPlayerName },
+            (response: { success: boolean; gameState?: GameState; error?: string }) => {
+              isResumingRef.current = false;
+
+              if (response.success && response.gameState) {
+                saveRoomSession(savedRoomCode, savedPlayerName);
+                setGameState(response.gameState);
+                setConnectionState("in-room");
+                setError(null);
+              } else {
+                clearRoomSession();
+                setGameState(null);
+                setScoreResults([]);
+                setConnectionState("connected");
+                setError(response.error ?? "Could not restore your previous room.");
+              }
+            }
+          );
         }
         return;
       }
@@ -167,8 +279,12 @@ export function useGameSocket(): UseGameSocketReturn {
     // it never computes state locally. The server is the
     // single source of truth.
     socket.on(GameEvents.STATE, (data: { gameState: GameState; scoreResults: ScoreResult[] }) => {
-      roomCodeRef.current = data.gameState.roomId;
-      setRoomCode(data.gameState.roomId);
+      if (playerNameRef.current) {
+        saveRoomSession(data.gameState.roomId, playerNameRef.current);
+      } else {
+        roomCodeRef.current = data.gameState.roomId;
+        setRoomCode(data.gameState.roomId);
+      }
       setGameState(data.gameState);
       setScoreResults(data.scoreResults ?? []);
       setConnectionState("in-room");
@@ -179,10 +295,10 @@ export function useGameSocket(): UseGameSocketReturn {
     // We disconnect the socket to prevent memory leaks and
     // ghost connections on the server.
     return () => {
-      roomCodeRef.current = null;
+      isResumingRef.current = false;
       socket.disconnect();
     };
-  }, []); // Empty dependency array = runs once on mount
+  }, [clearRoomSession, saveRoomSession]);
 
   // ============================================================
   // HELPER: Emit a game action to the server
@@ -202,6 +318,9 @@ export function useGameSocket(): UseGameSocketReturn {
     const socket = socketRef.current;
     if (!socket) return;
 
+    const trimmedPlayerName = playerName.trim();
+    if (!trimmedPlayerName) return;
+
     setConnectionState("joining");
     setError(null);
 
@@ -210,11 +329,10 @@ export function useGameSocket(): UseGameSocketReturn {
     // It's like fetch().then(response => ...) but over WebSocket!
     socket.emit(
       RoomEvents.CREATE,
-      { playerName },
+      { playerName: trimmedPlayerName },
       (response: { success: boolean; roomCode?: string; gameState?: GameState; error?: string }) => {
         if (response.success && response.roomCode && response.gameState) {
-          roomCodeRef.current = response.roomCode;
-          setRoomCode(response.roomCode);
+          saveRoomSession(response.roomCode, trimmedPlayerName);
           setGameState(response.gameState);
           setConnectionState("in-room");
         } else {
@@ -223,23 +341,25 @@ export function useGameSocket(): UseGameSocketReturn {
         }
       }
     );
-  }, []);
+  }, [saveRoomSession]);
 
   const joinRoom = useCallback((code: string, playerName: string) => {
     const socket = socketRef.current;
     if (!socket) return;
+
+    const trimmedPlayerName = playerName.trim();
+    const normalizedCode = code.trim().toUpperCase();
+    if (!trimmedPlayerName || !normalizedCode) return;
 
     setConnectionState("joining");
     setError(null);
 
     socket.emit(
       RoomEvents.JOIN,
-      { roomCode: code, playerName },
+      { roomCode: normalizedCode, playerName: trimmedPlayerName },
       (response: { success: boolean; gameState?: GameState; error?: string }) => {
         if (response.success && response.gameState) {
-          const normalizedCode = code.toUpperCase();
-          roomCodeRef.current = normalizedCode;
-          setRoomCode(normalizedCode);
+          saveRoomSession(normalizedCode, trimmedPlayerName);
           setGameState(response.gameState);
           setConnectionState("in-room");
         } else {
@@ -248,7 +368,7 @@ export function useGameSocket(): UseGameSocketReturn {
         }
       }
     );
-  }, []);
+  }, [saveRoomSession]);
 
   // ============================================================
   // RETURN — All state and actions the component needs

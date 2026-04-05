@@ -6,6 +6,14 @@ import { PwaInstallPrompt } from '@/components/PwaInstallPrompt'
 
 const games = [
   {
+    id: 'battleship',
+    name: 'Battleship',
+    description: 'Place your fleet, share a room code, and duel in real-time.',
+    emoji: '🚢',
+    path: '/games/battleship',
+    players: '2',
+  },
+  {
     id: 'guess-me',
     name: 'Guess Me',
     description: 'Pick a number, perform a prompt, and try to guess what others chose!',
