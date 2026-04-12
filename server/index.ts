@@ -70,6 +70,7 @@ import {
   logError,
   logServer,
 } from "./logger.js";
+import { getDrawStats, registerDrawHandlers } from "./games/draw/socketHandlers.js";
 
 // 💡 VALIDATION: Checks every action before passing it to the
 // game engine. Never trust the client!
@@ -205,12 +206,18 @@ const io = new Server(httpServer, {
   },
 });
 
+registerDrawHandlers(io, { disconnectGraceMs: DISCONNECT_GRACE_MS });
+
 // 💡 Simple health check endpoint — useful for monitoring and
 // deployment checks. Hit GET /health to see if the server is alive.
 app.get("/health", (_req, res) => {
+  const drawStats = getDrawStats();
+
   res.json({
     status: "ok",
     rooms: rooms.size,
+    drawRooms: drawStats.roomCount,
+    drawPlayers: drawStats.playerCount,
     uptime: process.uptime(),
   });
 });

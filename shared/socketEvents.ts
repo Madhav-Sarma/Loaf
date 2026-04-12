@@ -56,3 +56,32 @@ export const GameActionTypes = {
 // 💡 TypeScript utility type — extracts the union of all action type values.
 // Useful for type-checking the "type" field in action handlers.
 export type GameActionType = (typeof GameActionTypes)[keyof typeof GameActionTypes];
+
+// --- Draw room lifecycle events ---
+export const DrawRoomEvents = {
+  CREATE: "draw:room:create",
+  JOIN: "draw:room:join",
+  LEAVE: "draw:room:leave",
+} as const;
+
+// --- Draw game realtime events ---
+export const DrawGameEvents = {
+  ACTION: "draw:action",
+  STATE: "draw:state",
+  STROKE: "draw:stroke",
+  ERROR: "draw:error",
+} as const;
+
+// --- Draw action types ---
+export const DrawActionTypes = {
+  UPDATE_SETTINGS: "updateSettings",
+  START_GAME: "startGame",
+  PICK_WORD: "pickWord",
+  SUBMIT_GUESS: "submitGuess",
+  SEND_MESSAGE: "sendMessage",
+  CLEAR_CANVAS: "clearCanvas",
+  STROKE: "stroke",
+  SKIP_TURN: "skipTurn",
+} as const;
+
+export type DrawActionType = (typeof DrawActionTypes)[keyof typeof DrawActionTypes];

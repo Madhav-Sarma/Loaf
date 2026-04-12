@@ -29,6 +29,14 @@ const games = [
     path: '/games/guess-me',
     players: '3–10',
   },
+  {
+    id: 'draw',
+    name: 'Draw Battle',
+    description: 'Real-time drawing and guessing rounds with hints, scoring, and host controls.',
+    emoji: '🎨',
+    path: '/games/draw',
+    players: '2–12',
+  },
 ]
 
 export function Home() {

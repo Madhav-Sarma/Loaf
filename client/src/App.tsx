@@ -3,6 +3,7 @@ import { Home } from './pages/Home'
 import { GuessMe } from './games/guess-me/GuessMe'
 import { Battleship } from './games/battleship/Battleship'
 import { Wordle } from './games/wordle/Wordle'
+import { Draw } from './games/draw/Draw'
 import { ThemeToggle } from './components/ThemeToggle'
 import { MusicInitializer } from './components/MusicInitializer'
 import { MusicProvider } from './contexts/MusicContext'
@@ -18,6 +19,7 @@ export function App() {
           <Route path="/games/wordle" element={<Wordle />} />
           <Route path="/games/guess-me" element={<GuessMe />} />
           <Route path="/games/battleship" element={<Battleship />} />
+          <Route path="/games/draw" element={<Draw />} />
         </Routes>
       </>
     </MusicProvider>
